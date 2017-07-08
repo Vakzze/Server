@@ -26,7 +26,8 @@ int main(int argc , char *argv[])
     }
     
          
-    server.sin_addr.s_addr = inet_addr("74.125.224.72");
+    //server.sin_addr.s_addr = inet_addr("172.217.20.3");
+    server.sin_addr.s_addr = inet_addr("");
     server.sin_family = AF_INET;
     server.sin_port = htons( 80 );
     
@@ -39,7 +40,7 @@ int main(int argc , char *argv[])
     }
     
     //printf("Connected"); 
-    puts("Connected");
+    puts("I'm connected");
     return 0;
     
 }

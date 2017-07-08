@@ -51,7 +51,10 @@ int main(int argc, char *argv[])
         
         printf("Type a something to the client:\n");
         getLine(message,1000);
-        printf("%s", message);
+        
+        write(connfd, message, strlen(message));        
+
+        //printf("%s", message);
 
         close(connfd);
         sleep(1);

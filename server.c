@@ -15,7 +15,7 @@ int getLine(char s[], int lim);
 
 int main(int argc, char *argv[])
 {
-    int listenfd = 0, connfd = 0;
+    int listenfd = 0, connfd = 0, len;
     struct sockaddr_in serv_addr; 
     int count = 0;
     char welcomeMassage[100] = "Hello and welcome to my server";
@@ -54,11 +54,18 @@ int main(int argc, char *argv[])
         getLine(message,1000);
         
         write(connfd, message, strlen(message));
-        recv(connfd,incomeMsg, strlen(incomeMsg),0);
-        printf("Massage from client: %s", incomeMsg);        
 
         //printf("%s", message);
 
+
+        if((len = recv(connfd,incomeMsg, strlen(incomeMsg),0)) == -1)
+        {
+            printf("No msg recived");
+        }
+        else
+        {
+            printf("Massage from client: %s", incomeMsg);
+        }
         close(connfd);
         sleep(1);
      }

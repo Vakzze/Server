@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("Message is send\nNumber of char:%d \n", len);
+        printf("Message is send\nNumber of char:%d\n", len);
     }
 
     close(sockfd);

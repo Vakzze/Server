@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
     char welcomeMassage[100] = "Hello and welcome to my server";
     char message[1000];
     char sendBuff[1025];
+    char incomeMsg[1000];
     time_t ticks; 
 
 
@@ -52,7 +53,9 @@ int main(int argc, char *argv[])
         printf("Type a something to the client:\n");
         getLine(message,1000);
         
-        write(connfd, message, strlen(message));        
+        write(connfd, message, strlen(message));
+        recv(connfd,incomeMsg, strlen(incomeMsg),0);
+        printf("Massage from client: %s", incomeMsg);        
 
         //printf("%s", message);
 

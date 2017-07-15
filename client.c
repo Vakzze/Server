@@ -1,5 +1,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -12,11 +14,8 @@
 int main(int argc, char *argv[])
 {
     
-    int sockfd = 0, n = 0, len;
-    char recvBuff[1024];
+    int sockfd = 0;
     struct sockaddr_in serv_addr; 
-
-    char message[1000] = "Hello world from client";
 
     if(argc != 2)
     {
@@ -24,7 +23,6 @@ int main(int argc, char *argv[])
         return 1;
     } 
 
-    memset(recvBuff, '0',sizeof(recvBuff));
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Error : Could not create socket \n");
@@ -48,27 +46,58 @@ int main(int argc, char *argv[])
        return 1;
     } 
 
-    while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0)
+    while(1)
     {
-        recvBuff[n] = 0;
-        if(fputs(recvBuff, stdout) == EOF)
-        {
-            printf("\n Error : Fputs error\n");
-        }
-    } 
+        fd_set rfds;
+        struct timeval tv;
+        int reRet;
+        int nfds;
 
-    if(n < 0)
-    {
-        printf("\n Read error \n");
-    } 
-    
-    if((len = send(sockfd,message,strlen(message),0)) == -1)
-    {
-        printf("No massage transmitted");
-    }
-    else
-    {
-        printf("Message is send\nNumber of char:%d \n", len);
+        //Watch stdin (fd 0) to see when it ha input
+        FD_ZERO(&rfds);
+        FD_SET(0, &rfds);
+        FD_SET(sockfd, &rfds);
+        nfds = sockfd+1;
+
+        //Wait up to five seconds
+        
+        tv.tv_sec = 10000;
+        tv.tv_usec = 0;
+
+        reRet = select(nfds,&rfds, NULL, NULL, &tv);
+        //printf("reRet: %d\n",reRet);
+
+        if(reRet == -1 )
+        {
+            perror("select()");
+            break;
+        }
+        else
+        {
+            char input_buffer[1024];
+            if(FD_ISSET(0,&rfds))
+            {
+                int l;
+                l=read(0,input_buffer,sizeof(input_buffer));
+                if(l>0)
+                    write(sockfd,input_buffer,l);
+                else
+                    break;
+            }
+            else if(FD_ISSET(sockfd,&rfds))
+            {
+                int l;
+                l=read(sockfd,input_buffer,sizeof(input_buffer));
+                if(l>0)
+                    write(1,input_buffer,l);
+                else
+                    break;
+            }
+            else
+            {
+                printf("no data recived within 5 seconds");
+            }
+        }
     }
 
     close(sockfd);

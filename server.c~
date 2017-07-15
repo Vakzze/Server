@@ -1,4 +1,6 @@
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -18,7 +20,7 @@ int main(int argc, char *argv[])
     int listenfd = 0, connfd = 0, len;
     struct sockaddr_in serv_addr; 
     int count = 0;
-    char welcomeMassage[100] = "Hello and welcome to my server";
+    char welcomeMassage[1000] = "Hello and welcome to my server";
     char message[1000];
     char sendBuff[1025];
     char incomeMsg[1000];
@@ -26,8 +28,8 @@ int main(int argc, char *argv[])
 
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    memset(&serv_addr, '0', sizeof(serv_addr));
-    memset(sendBuff, '0', sizeof(sendBuff)); 
+    //memset(&serv_addr, '0', sizeof(serv_addr));
+    //memset(sendBuff, '0', sizeof(sendBuff)); 
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -46,10 +48,62 @@ int main(int argc, char *argv[])
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
         ticks = time(NULL);
         count = count + 1; 
-        printf("Nummber of connections: %d\n",count);
+        printf("Number of connections: %d\n",count);
         snprintf(sendBuff, sizeof(sendBuff), "%s\n%.24s\r\n", welcomeMassage, ctime(&ticks));
         write(connfd, sendBuff, strlen(sendBuff)); 
-        
+
+        while(1)
+        {
+
+            fd_set rfds;
+            struct timeval tv;
+            int reRet;
+            int nfds;
+
+            FD_ZERO(&rfds);
+            FD_SET(0,&rfds);
+            FD_SET(connfd, &rfds);
+            nfds = connfd + 1;
+
+            tv.tv_sec = 1000;
+            tv.tv_usec = 0;
+            
+            reRet = select(nfds, &rfds, NULL, NULL, &tv)
+
+            if(reRet == -1)
+            {
+                perror("select()");
+                break;
+            }
+            else
+            {
+                char input_buffer[1024];
+                if(FD_ISSET(0,&rfds))
+                {
+                    int l;
+                    l = read(0,input_buffer,sizeof(input_buffer));
+                    if(l > 0)
+                        write(connfd,input_buffer,l);
+                    else
+                        break;
+                }
+                else if(FD_ISSET(connfd,&rfds))
+                {
+                    int l;
+                    l = read(connfd, input_buffer, sizeof(input_buffer));
+                    if(l > 0 )
+                        write(1,input_buffer,l);
+                    else
+                        break;
+                }
+                else
+                {
+                    printf("No data recived within 5 seconds\n");
+                }
+            }
+        }
+
+        /*
         printf("Type a something to the client:\n");
         getLine(message,1000);
         
@@ -64,9 +118,11 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("Massage from client: %s", incomeMsg);
+            printf("Message from client: %s %ld\n", incomeMsg, sizeof(incomeMsg));
+
         }
-        close(confd);
+        */
+        close(connfd);
         sleep(1);
      }
 }

@@ -1,0 +1,175 @@
+ACCEPT(2)                              Linux Programmer's Manual                             ACCEPT(2)
+
+NNAAMMEE
+       accept, accept4 - accept a connection on a socket
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>          /* See NOTES */
+       ##iinncclluuddee <<ssyyss//ssoocckkeett..hh>>
+
+       iinntt aacccceepptt((iinntt _s_o_c_k_f_d,, ssttrruucctt ssoocckkaaddddrr **_a_d_d_r,, ssoocckklleenn__tt **_a_d_d_r_l_e_n));;
+
+       ##ddeeffiinnee __GGNNUU__SSOOUURRCCEE             /* See feature_test_macros(7) */
+       ##iinncclluuddee <<ssyyss//ssoocckkeett..hh>>
+
+       iinntt aacccceepptt44((iinntt _s_o_c_k_f_d,, ssttrruucctt ssoocckkaaddddrr **_a_d_d_r,,
+                   ssoocckklleenn__tt **_a_d_d_r_l_e_n,, iinntt _f_l_a_g_s));;
+
+DDEESSCCRRIIPPTTIIOONN
+       The  aacccceepptt()  system  call  is used with connection-based socket types (SSOOCCKK__SSTTRREEAAMM, SSOOCCKK__SSEEQQ‐‐
+       PPAACCKKEETT).  It extracts the first connection request on the queue of pending connections for  the
+       listening  socket,  _s_o_c_k_f_d,  creates  a new connected socket, and returns a new file descriptor
+       referring to that socket.  The newly created socket is not in the listening state.  The  origi‐
+       nal socket _s_o_c_k_f_d is unaffected by this call.
+
+       The  argument _s_o_c_k_f_d is a socket that has been created with ssoocckkeett(2), bound to a local address
+       with bbiinndd(2), and is listening for connections after a lliisstteenn(2).
+
+       The argument _a_d_d_r is a pointer to a _s_o_c_k_a_d_d_r structure.  This structure is filled in  with  the
+       address  of  the  peer  socket,  as known to the communications layer.  The exact format of the
+       address returned _a_d_d_r is determined by the socket's  address  family  (see  ssoocckkeett(2)  and  the
+       respective protocol man pages).  When _a_d_d_r is NULL, nothing is filled in; in this case, _a_d_d_r_l_e_n
+       is not used, and should also be NULL.
+
+       The _a_d_d_r_l_e_n argument is a value-result argument: the caller must initialize it to  contain  the
+       size  (in bytes) of the structure pointed to by _a_d_d_r; on return it will contain the actual size
+       of the peer address.
+
+       The returned address is truncated if the buffer provided is too small; in  this  case,  _a_d_d_r_l_e_n
+       will return a value greater than was supplied to the call.
+
+       If  no  pending connections are present on the queue, and the socket is not marked as nonblock‐
+       ing, aacccceepptt() blocks the caller until a connection is present.  If the socket  is  marked  non‐
+       blocking  and  no  pending  connections are present on the queue, aacccceepptt() fails with the error
+       EEAAGGAAIINN or EEWWOOUULLDDBBLLOOCCKK.
+
+       In order to be notified of incoming connections on a socket, you can use sseelleecctt(2) or  ppoollll(2).
+       A  readable  event  will  be delivered when a new connection is attempted and you may then call
+       aacccceepptt() to get a socket for that connection.  Alternatively, you can set the socket to deliver
+       SSIIGGIIOO when activity occurs on a socket; see ssoocckkeett(7) for details.
+
+       For  certain  protocols which require an explicit confirmation, such as DECNet, aacccceepptt() can be
+       thought of as merely dequeuing the next connection request and not implying confirmation.  Con‐
+       firmation  can  be  implied by a normal read or write on the new file descriptor, and rejection
+       can be implied by closing the new socket.  Currently only DECNet has these semantics on Linux.
+
+       If _f_l_a_g_s is 0, then aacccceepptt44() is the same as aacccceepptt().  The following  values  can  be  bitwise
+       ORed in _f_l_a_g_s to obtain different behavior:
+
+       SSOOCCKK__NNOONNBBLLOOCCKK   Set  the  OO__NNOONNBBLLOOCCKK  file status flag on the new open file description.  Using
+                       this flag saves extra calls to ffccnnttll(2) to achieve the same result.
+
+       SSOOCCKK__CCLLOOEEXXEECC    Set the close-on-exec (FFDD__CCLLOOEEXXEECC) flag on the new file  descriptor.   See  the
+                       description  of  the OO__CCLLOOEEXXEECC flag in ooppeenn(2) for reasons why this may be use‐
+                       ful.
+
+RREETTUURRNN VVAALLUUEE
+       On success, these system calls return a nonnegative  integer  that  is  a  descriptor  for  the
+       accepted socket.  On error, -1 is returned, and _e_r_r_n_o is set appropriately.
+
+   EErrrroorr hhaannddlliinngg
+       Linux  aacccceepptt()  (and  aacccceepptt44()) passes already-pending network errors on the new socket as an
+       error code from aacccceepptt().  This behavior differs from other BSD  socket  implementations.   For
+       reliable  operation  the  application should detect the network errors defined for the protocol
+       after aacccceepptt() and treat them like EEAAGGAAIINN by retrying.  In the case of TCP/IP, these are  EENNEETT‐‐
+       DDOOWWNN, EEPPRROOTTOO, EENNOOPPRROOTTOOOOPPTT, EEHHOOSSTTDDOOWWNN, EENNOONNEETT, EEHHOOSSTTUUNNRREEAACCHH, EEOOPPNNOOTTSSUUPPPP, and EENNEETTUUNNRREEAACCHH.
+
+EERRRROORRSS
+       EEAAGGAAIINN or EEWWOOUULLDDBBLLOOCCKK
+              The  socket  is  marked  nonblocking  and  no  connections  are  present to be accepted.
+              POSIX.1-2001 and POSIX.1-2008 allow either error to be returned for this  case,  and  do
+              not  require  these  constants  to have the same value, so a portable application should
+              check for both possibilities.
+
+       EEBBAADDFF  The descriptor is invalid.
+
+       EECCOONNNNAABBOORRTTEEDD
+              A connection has been aborted.
+
+       EEFFAAUULLTT The _a_d_d_r argument is not in a writable part of the user address space.
+
+       EEIINNTTRR  The system call was interrupted by a signal that was caught before  a  valid  connection
+              arrived; see ssiiggnnaall(7).
+
+       EEIINNVVAALL Socket is not listening for connections, or _a_d_d_r_l_e_n is invalid (e.g., is negative).
+
+       EEIINNVVAALL (aacccceepptt44()) invalid value in _f_l_a_g_s.
+
+       EEMMFFIILLEE The per-process limit on the number of open file descriptors has been reached.
+
+       EENNFFIILLEE The system-wide limit on the total number of open files has been reached.
+
+       EENNOOBBUUFFSS, EENNOOMMEEMM
+              Not  enough  free memory.  This often means that the memory allocation is limited by the
+              socket buffer limits, not by the system memory.
+
+       EENNOOTTSSOOCCKK
+              The file descriptor _s_o_c_k_f_d does not refer to a socket.
+
+       EEOOPPNNOOTTSSUUPPPP
+              The referenced socket is not of type SSOOCCKK__SSTTRREEAAMM.
+
+       EEPPRROOTTOO Protocol error.
+
+       In addition, Linux aacccceepptt() may fail if:
+
+       EEPPEERRMM  Firewall rules forbid connection.
+
+       In addition, network errors for the new socket and as defined for the protocol may be returned.
+       Various  Linux kernels can return other errors such as EENNOOSSRR, EESSOOCCKKTTNNOOSSUUPPPPOORRTT, EEPPRROOTTOONNOOSSUUPPPPOORRTT,
+       EETTIIMMEEDDOOUUTT.  The value EERREESSTTAARRTTSSYYSS may be seen during a trace.
+
+VVEERRSSIIOONNSS
+       The aacccceepptt44() system call is available starting with Linux 2.6.28; support in glibc  is  avail‐
+       able starting with version 2.10.
+
+CCOONNFFOORRMMIINNGG TTOO
+       aacccceepptt(): POSIX.1-2001, POSIX.1-2008, SVr4, 4.4BSD (aacccceepptt() first appeared in 4.2BSD).
+
+       aacccceepptt44() is a nonstandard Linux extension.
+
+       On Linux, the new socket returned by aacccceepptt() does _n_o_t inherit file status flags such as OO__NNOONN‐‐
+       BBLLOOCCKK and OO__AASSYYNNCC from the listening socket.  This behavior  differs  from  the  canonical  BSD
+       sockets  implementation.  Portable programs should not rely on inheritance or noninheritance of
+       file status flags and always explicitly set all required flags  on  the  socket  returned  from
+       aacccceepptt().
+
+NNOOTTEESS
+       POSIX.1-2001  does  not  require  the  inclusion  of _<_s_y_s_/_t_y_p_e_s_._h_>, and this header file is not
+       required on Linux.  However, some historical (BSD) implementations required this  header  file,
+       and portable applications are probably wise to include it.
+
+       There may not always be a connection waiting after a SSIIGGIIOO is delivered or sseelleecctt(2) or ppoollll(2)
+       return a readability event because the connection might have been removed  by  an  asynchronous
+       network error or another thread before aacccceepptt() is called.  If this happens, then the call will
+       block waiting for the next connection to arrive.  To ensure that  aacccceepptt()  never  blocks,  the
+       passed socket _s_o_c_k_f_d needs to have the OO__NNOONNBBLLOOCCKK flag set (see ssoocckkeett(7)).
+
+   TThhee ssoocckklleenn__tt ttyyppee
+       The third argument of aacccceepptt() was originally declared as an _i_n_t _* (and is that under libc4 and
+       libc5 and on many other systems like 4.x BSD, SunOS 4, SGI); a POSIX.1g draft  standard  wanted
+       to  change  it  into  a  _s_i_z_e___t _*, and that is what it is for SunOS 5.  Later POSIX drafts have
+       _s_o_c_k_l_e_n___t _*, and so do the Single UNIX Specification and glibc2.  Quoting Linus Torvalds:
+
+       "_Any_ sane library _must_ have "socklen_t" be the same size as int.  Anything else breaks  any
+       BSD socket layer stuff.  POSIX initially _d_i_d make it a size_t, and I (and hopefully others, but
+       obviously not too many) complained to them very loudly indeed.  Making  it  a  size_t  is  com‐
+       pletely  broken,  exactly because size_t very seldom is the same size as "int" on 64-bit archi‐
+       tectures, for example.  And it _h_a_s to be the same size as "int" because  that's  what  the  BSD
+       socket  interface is.  Anyway, the POSIX people eventually got a clue, and created "socklen_t".
+       They shouldn't have touched it in the first place, but once they did they felt it had to have a
+       named  type for some unfathomable reason (probably somebody didn't like losing face over having
+       done the original stupid thing, so they silently just renamed their blunder)."
+
+EEXXAAMMPPLLEE
+       See bbiinndd(2).
+
+SSEEEE AALLSSOO
+       bbiinndd(2), ccoonnnneecctt(2), lliisstteenn(2), sseelleecctt(2), ssoocckkeett(2), ssoocckkeett(7)
+
+CCOOLLOOPPHHOONN
+       This page is part of release 4.04 of  the  Linux  _m_a_n_-_p_a_g_e_s  project.   A  description  of  the
+       project, information about reporting bugs, and the latest version of this page, can be found at
+       http://www.kernel.org/doc/man-pages/.
+
+Linux                                         2015-12-28                                     ACCEPT(2)

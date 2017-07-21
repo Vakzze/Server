@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
 
     while(1)
     {
+
+        
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
         ticks = time(NULL);
         count = count + 1; 

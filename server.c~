@@ -45,6 +45,9 @@ int main(int argc, char *argv[])
 
     while(1)
     {
+
+        pid_t = fork();
+        
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
         ticks = time(NULL);
         count = count + 1; 
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
             tv.tv_sec = 1000;
             tv.tv_usec = 0;
             
-            reRet = select(nfds, &rfds, NULL, NULL, &tv)
+            reRet = select(nfds, &rfds, NULL, NULL, &tv);
 
             if(reRet == -1)
             {

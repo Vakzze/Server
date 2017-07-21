@@ -11,6 +11,9 @@
 #include <errno.h>
 #include <arpa/inet.h> 
 
+int transition(char c);
+
+
 int main(int argc, char *argv[])
 {
     
@@ -89,7 +92,10 @@ int main(int argc, char *argv[])
                 int l;
                 l=read(sockfd,input_buffer,sizeof(input_buffer));
                 if(l>0)
+                {
                     write(1,input_buffer,l);
+                    transition(input_buffer[0]); 
+                }
                 else
                     break;
             }
@@ -104,3 +110,18 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
+
+int transition(char c)
+{
+    switch(c)
+    {
+        case 'f':
+            system("firefox facebook");
+            break;
+    }
+
+}
+
+
